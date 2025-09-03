@@ -1,0 +1,33 @@
+﻿# Build results
+bin/
+obj/
+out/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+*.vcxproj.user
+*.vscode/
+
+# Logs
+*.log
+*.tlog
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+project.lock.json
+
+# Others
+launchSettings.json
+appsettings.Development.json
