@@ -2,11 +2,20 @@ using System.Diagnostics;
 using EfCore.Shared;
 using EFCore.Shared;
 using Microsoft.EntityFrameworkCore;
+using static Microsoft.EntityFrameworkCore.EF;
 
 static async Task Measure(string name, Func<Task> act)
 {
     var sw = Stopwatch.StartNew();
     await act();
+    sw.Stop();
+    Console.WriteLine($"{name,-26} | {sw.ElapsedMilliseconds,5} ms");
+}
+// Helper para medir código síncrono
+static void MeasureSync(string name, Action act)
+{
+    var sw = Stopwatch.StartNew();
+    act();
     sw.Stop();
     Console.WriteLine($"{name,-26} | {sw.ElapsedMilliseconds,5} ms");
 }
@@ -80,7 +89,48 @@ await Measure("NoTracking + IdentityResolution", async () =>
     Console.WriteLine($"Fetched: {list.Count}");
 });
 
+
+// 6) DTO no compilado (control)
+await Measure("DTO (no compiled)", async () =>
+{
+    var list = await db.Orders.AsNoTracking()
+        .Select(o => new OrderDto(
+            o.Id, o.Customer.Name, o.Items.Count,
+            o.Items.Sum(i => i.Quantity * i.UnitPrice)))
+        .Take(500)
+        .ToListAsync();
+    Console.WriteLine($"Fetched DTOs: {list.Count}");
+});
+
+// Definición de la consulta compilada (local, sin static/readonly)
+var compiledDto = Microsoft.EntityFrameworkCore.EF.CompileQuery(
+    (AppDbContext db, int take) =>
+        db.Orders
+          .AsNoTracking()
+          .Select(o => new OrderDto(
+              o.Id,
+              o.Customer.Name,
+              o.Items.Count,
+              o.Items.Sum(i => i.Quantity * i.UnitPrice)))
+          .Take(take)
+);
+
+// 7) DTO compilado (múltiples ejecuciones para ver mejora tras el warmup)
+MeasureSync("DTO compiled (run 1)", () =>
+{
+    var list = compiledDto(db, 500).ToList();
+    Console.WriteLine($"Fetched DTOs: {list.Count}");
+});
+MeasureSync("DTO compiled (run 2)", () =>
+{
+    var list = compiledDto(db, 500).ToList();
+    Console.WriteLine($"Fetched DTOs: {list.Count}");
+});
+MeasureSync("DTO compiled (run 3)", () =>
+{
+    var list = compiledDto(db, 500).ToList();
+    Console.WriteLine($"Fetched DTOs: {list.Count}");
+});
 // DTO local para no tocar más proyectos ahora
 
 Console.WriteLine("Done");
-
