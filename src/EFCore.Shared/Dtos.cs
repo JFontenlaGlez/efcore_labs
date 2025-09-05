@@ -9,4 +9,6 @@ namespace EFCore.Shared
     public class Dtos
     {
     }
+
+    public record OrderDto(int Id, string CustomerName, int Items, decimal Total);
 }
