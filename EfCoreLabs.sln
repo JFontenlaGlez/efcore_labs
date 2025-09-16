@@ -5,29 +5,26 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{18FBC3AA-D0B8-4224-BB86-CD7118F0E79B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.Advanced", "src\EFCore.Advanced\EFCore.Advanced.csproj", "{5272642E-7EAC-44CD-BC2B-5E20993F564C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.Advanced", "src\EFCore.Advanced\EFCore.Advanced.csproj", "{5272642E-7EAC-44CD-BC2B-5E20993F564C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.Basics", "src\EFCore.Basics\EFCore.Basics.csproj", "{CDE5F95D-6AF9-4BEB-8A87-EBC75C7C2846}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.Basics", "src\EFCore.Basics\EFCore.Basics.csproj", "{CDE5F95D-6AF9-4BEB-8A87-EBC75C7C2846}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.Performance", "src\EFCore.Performance\EFCore.Performance.csproj", "{843A51F6-C3DA-494E-9BFC-51036D4FFD17}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.Performance", "src\EFCore.Performance\EFCore.Performance.csproj", "{843A51F6-C3DA-494E-9BFC-51036D4FFD17}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.Shared", "src\EFCore.Shared\EFCore.Shared.csproj", "{F1D10C7E-B033-4203-9583-904EC94C80C5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.Shared", "src\EFCore.Shared\EFCore.Shared.csproj", "{F1D10C7E-B033-4203-9583-904EC94C80C5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{22191D97-967A-428F-BAFF-315E9F574A93}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EfCore.Tests", "tests\EfCore.Tests\EfCore.Tests.csproj", "{52179533-97D5-4570-BE46-54CA1A5FC32A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EfCore.Tests", "tests\EfCore.Tests\EfCore.Tests.csproj", "{52179533-97D5-4570-BE46-54CA1A5FC32A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", "{84251600-BAFC-4069-9766-FC8831151823}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EfCore.Benchmarks", "benchmarks\EfCore.Benchmarks\EfCore.Benchmarks.csproj", "{1FA1C6D1-B7E1-46D8-B6D5-3E0C1BB0952A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EfCore.Benchmarks", "benchmarks\EfCore.Benchmarks\EfCore.Benchmarks.csproj", "{1FA1C6D1-B7E1-46D8-B6D5-3E0C1BB0952A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{5272642E-7EAC-44CD-BC2B-5E20993F564C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -55,6 +52,9 @@ Global
 		{1FA1C6D1-B7E1-46D8-B6D5-3E0C1BB0952A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1FA1C6D1-B7E1-46D8-B6D5-3E0C1BB0952A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{5272642E-7EAC-44CD-BC2B-5E20993F564C} = {18FBC3AA-D0B8-4224-BB86-CD7118F0E79B}
 		{CDE5F95D-6AF9-4BEB-8A87-EBC75C7C2846} = {18FBC3AA-D0B8-4224-BB86-CD7118F0E79B}
@@ -62,5 +62,8 @@ Global
 		{F1D10C7E-B033-4203-9583-904EC94C80C5} = {18FBC3AA-D0B8-4224-BB86-CD7118F0E79B}
 		{52179533-97D5-4570-BE46-54CA1A5FC32A} = {22191D97-967A-428F-BAFF-315E9F574A93}
 		{1FA1C6D1-B7E1-46D8-B6D5-3E0C1BB0952A} = {84251600-BAFC-4069-9766-FC8831151823}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {53890695-8DCF-4A6B-BF2C-5670D80D83B1}
 	EndGlobalSection
 EndGlobal

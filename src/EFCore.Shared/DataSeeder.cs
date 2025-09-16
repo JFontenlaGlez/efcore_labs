@@ -4,7 +4,7 @@ namespace EfCore.Shared;
 
 public static class DataSeeder
 {
-    public static async Task EnsureSeedAsync(AppDbContext db, int customers = 1000, int products = 250, int orders = 5000)
+    public static async Task EnsureSeedAsync(AppDbContext db, int customers = 100000, int products = 25000, int orders = 100000)
     {
         await db.Database.EnsureCreatedAsync();
 

@@ -1,6 +1,7 @@
 
 using EFCore.Shared;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace EfCore.Shared;
 
@@ -17,6 +18,9 @@ public class AppDbContext : DbContext
     {
         b.Entity<Customer>().HasIndex(x => x.Email).IsUnique();
         b.Entity<OrderItem>().Property(x => x.UnitPrice).HasPrecision(18, 2);
+        b.Entity<OrderItem>().HasIndex(oi => oi.ProductId);
+        b.Entity<Order>().HasIndex(o => o.CreatedAt);
+
     }
 }
 

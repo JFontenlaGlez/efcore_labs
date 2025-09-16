@@ -4,6 +4,7 @@ using BenchmarkDotNet.Attributes;
 using EfCore.Shared;
 using EFCore.Shared;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 
 [MemoryDiagnoser] // Mide memoria (B/op) además del tiempo
 [RankColumn]
@@ -15,7 +16,7 @@ public class QueryBenchmarks
 
     // probamos con 500 y 5000 registros
     //[Params(500, 5000, 50000, 500000)]
-    [Params(50, 500, 5000, 50000)]
+    [Params(50, 500, 5000)]
     public int Take { get; set; }
 
     [GlobalSetup]
@@ -74,4 +75,6 @@ public class QueryBenchmarks
     [Benchmark]
     public List<OrderDto> ProjectionDtoCompiled() =>
         _compiledDto(_db, Take).ToList();
+    public class TopDto { public int ProductId; public int Qty; public decimal Total; }
+
 }

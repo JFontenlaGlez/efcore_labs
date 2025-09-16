@@ -1,8 +1,13 @@
 using System.Diagnostics;
 using EfCore.Shared;
 using EFCore.Shared;
+using EFCore.Shared.Reporting;
 using Microsoft.EntityFrameworkCore;
 using static Microsoft.EntityFrameworkCore.EF;
+
+
+const int TAKE_ORDERS = 1000; // para orders
+const int TOP_N = 50;         // para TOP productos
 
 static async Task Measure(string name, Func<Task> act)
 {
@@ -136,7 +141,7 @@ MeasureSync("DTO compiled (run 3)", () =>
 // ------- Escenarios extra: consultas útiles de verdad -------
 
 Console.WriteLine("-------------------------------------------------------------------------------------------------------------------------------");
-Console.WriteLine("-------------------------------------------------------------------------------------------------------------------------------");
+Console.WriteLine("--------------------------------------------Escenarios útiles-----------------------------------------------------------");
 Console.WriteLine("-------------------------------------------------------------------------------------------------------------------------------");
 
 // 1) Include completo vs Filtered Include
@@ -146,7 +151,7 @@ await Measure("Include completo (Items)", async () =>
         .AsNoTracking()
         .Include(o => o.Items)
         .OrderBy(o => o.Id)
-        .Take(500)
+        .Take(1000)
         .ToListAsync();
     
     Console.WriteLine();
@@ -159,53 +164,63 @@ await Measure("Filtered Include (Items Qty>=2)", async () =>
         .AsNoTracking()
         .Include(o => o.Items.Where(i => i.Quantity >= 2))
         .OrderBy(o => o.Id)
-        .Take(500)
+        .Take(1000)
         .ToListAsync();
 
     Console.WriteLine();
     Console.WriteLine($"Orders: {list.Count}, Items(media): {list.Average(o => o.Items.Count):F2}");
 });
-
-// 2) Aggregates servidor vs sumar en memoria
-await Measure("Aggregates server (TOP 50 productos)", async () =>
+await Measure("Filtered Include (Qty>=3 & últimos 90d)", async () =>
 {
-    var top = await db.OrderItems.AsNoTracking()
-        .GroupBy(oi => oi.ProductId)
-        .Select(g => new
-        {
-            ProductId = g.Key,
-            Qty = g.Sum(x => x.Quantity),
-            Total = g.Sum(x => x.Quantity * x.UnitPrice)
-        })
-        .OrderByDescending(x =>(double) x.Total)
-        .Take(50)
-        .ToListAsync();
-
+    var since = DateTime.UtcNow.AddDays(-90);
+    var list = await db.Orders.AsNoTracking()
+        .Where(o => o.CreatedAt >= since)
+        .Include(o => o.Items.Where(i => i.Quantity >= 3))
+        .OrderBy(o => o.Id).Take(1000).ToListAsync();
+    
     Console.WriteLine();
-    Console.WriteLine($"Top: {top.Count}");
+    Console.WriteLine($"Orders: {list.Count}, Items(media): {list.Average(o => o.Items.Count):F2}");
 });
 
-await Measure("Aggregates en memoria (naïve)", async () =>
-{
-    var items = await db.Orders.AsNoTracking()
-        .Include(o => o.Items)
-        .SelectMany(o => o.Items)
-        .ToListAsync();
 
-    var top = items
-        .GroupBy(oi => oi.ProductId)
-        .Select(g => new
-        {
-            ProductId = g.Key,
-            Qty = g.Sum(x => x.Quantity),
-            Total = g.Sum(x => x.Quantity * x.UnitPrice)
-        })
-        .OrderByDescending(x => x.Total)
-        .Take(50)
-        .ToList();
+// 2) Aggregates servidor vs sumar en memoria
+// Server-side (con índice en ProductId)
+await Measure("Aggregates server (TOP 50 productos)", async () =>
+{
+    var topServer = await db.OrderItems.AsNoTracking()
+      .GroupBy(oi => oi.ProductId)
+      .Select(g => new {
+          ProductId = g.Key,
+          Qty = g.Sum(x => x.Quantity),
+          Total = g.Sum(x => x.Quantity * x.UnitPrice)
+      })
+      .OrderByDescending(x => (double)x.Total) // cast por SQLite
+      .Take(TOP_N)
+      .ToListAsync();
 
     Console.WriteLine();
-    Console.WriteLine($"Top: {top.Count}");
+    Console.WriteLine($"Top: {topServer.Count}");
+});
+
+// Naïve justo (sin Include)
+await Measure("Aggregates en memoria (naïve justo)", async () =>
+{
+
+    var items = await db.OrderItems.AsNoTracking().ToListAsync();
+    var topNaive = items
+      .GroupBy(oi => oi.ProductId)
+      .Select(g => new {
+          ProductId = g.Key,
+          Qty = g.Sum(x => x.Quantity),
+          Total = g.Sum(x => x.Quantity * x.UnitPrice)
+      })
+      .OrderByDescending(x => x.Total)
+      .Take(TOP_N)
+      .ToList();
+
+    Console.WriteLine();
+    Console.WriteLine($"Top: {topNaive.Count}");
+
 });
 
 // 3) EXISTS bien (Any) vs Count()>0 y LEFT JOIN opcional
@@ -213,7 +228,7 @@ await Measure("EXISTS con Any()", async () =>
 {
     var list = await db.Customers.AsNoTracking()
         .Where(c => c.Orders.Any())
-        .Take(500)
+        .Take(1000)
         .ToListAsync();
 
     Console.WriteLine();
@@ -224,7 +239,7 @@ await Measure("COUNT()>0 (comparativa)", async () =>
 {
     var list = await db.Customers.AsNoTracking()
         .Where(c => c.Orders.Count() > 0)
-        .Take(500)
+        .Take(1000)
         .ToListAsync();
 
     Console.WriteLine();
@@ -240,13 +255,49 @@ await Measure("LEFT JOIN opcional", async () =>
         orderby o.Id
         select new { o.Id, CustomerName = c != null ? c.Name : "(none)" };
 
-    var list = await q.Take(500).ToListAsync();
+    var list = await q.Take(1000).ToListAsync();
 
     Console.WriteLine();
     Console.WriteLine($"Rows: {list.Count}");
 });
 
 // ------- Fin escenarios extra -------
+// 2b) Resumen de totales por pedido (Count/Sum/Avg/Min/Max)
+await Measure("Aggregates resumen pedidos", async () =>
+{
+    // Totales por pedido: usamos double para que SQLite permita agregados
+    var perOrderTotals =
+        db.OrderItems.AsNoTracking()
+          .GroupBy(oi => oi.OrderId)
+          .Select(g => g.Sum(oi => (double)oi.UnitPrice * oi.Quantity)); // IQueryable<double>
 
+    // Agregados sobre esos totales (una sola fila)
+    var row = await perOrderTotals
+        .Select(t => (double?)t) // permitir secuencia vacía
+        .GroupBy(_ => 1)
+        .Select(g => new
+        {
+            Count = g.LongCount(t => t != null),
+            Sum = g.Sum() ?? 0.0,
+            Avg = g.Average() ?? 0.0,
+            Min = g.Min() ?? 0.0,
+            Max = g.Max() ?? 0.0
+        })
+        .SingleOrDefaultAsync();
+
+    var dto = row == null
+        ? new AggregatesDto(0, 0m, 0m, 0m, 0m)
+        : new AggregatesDto(
+            Count: row.Count,
+            Sum: (decimal)row.Sum,
+            Avg: (decimal)row.Avg,
+            Min: (decimal)row.Min,
+            Max: (decimal)row.Max);
+
+    Console.WriteLine();
+    Console.WriteLine(
+        $"Pedidos: {dto.Count} | Sum: {dto.Sum:F2} | Avg: {dto.Avg:F2} | Min: {dto.Min:F2} | Max: {dto.Max:F2}");
+
+});
 
 Console.WriteLine("Done");
